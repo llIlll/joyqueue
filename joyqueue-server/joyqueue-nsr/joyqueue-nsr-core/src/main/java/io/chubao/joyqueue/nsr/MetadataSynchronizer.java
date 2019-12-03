@@ -282,10 +282,6 @@ public class MetadataSynchronizer {
             List sourceList = sourceAllCallable.call();
             logger.info("get {} source, data: {}, time: {}", name, sourceList.size(), SystemClock.now() - sourceStartTime);
 
-            long targetStartTime = SystemClock.now();
-            List targetList = targetAllCallable.call();
-            logger.info("get {} target, data: {}, time: {}", name, targetList.size(), SystemClock.now() - targetStartTime);
-
             for (int i = 0; i < sourceList.size(); i++) {
                 Object sourceItem = sourceList.get(i);
                 Object targetItem = targetFindFunction.apply(sourceItem);
@@ -313,18 +309,19 @@ public class MetadataSynchronizer {
                 }
             }
 
+            long targetStartTime = SystemClock.now();
+            List targetList = targetAllCallable.call();
+            logger.info("get {} target, data: {}, time: {}", name, targetList.size(), SystemClock.now() - targetStartTime);
+
             for (int i = 0; i < targetList.size(); i++) {
                 Object targetItem = targetList.get(i);
-                Object sourceItem = targetFindFunction.apply(targetItem);
+                Object sourceItem = sourceFindFunction.apply(targetItem);
                 if (sourceItem == null) {
                     logger.info("source not exist, target: {}", sourceItem, sourceItem);
                     if (!onlyCompare) {
                         targetDeleteConsumer.accept(sourceItem);
                     }
                     delete++;
-                }
-
-                if (i % 10 == 0) {
                     logger.info("delete {}, index: {}", name, i);
                 }
             }
