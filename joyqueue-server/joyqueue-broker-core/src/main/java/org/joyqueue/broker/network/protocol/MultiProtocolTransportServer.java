@@ -104,8 +104,8 @@ public class MultiProtocolTransportServer extends Service implements TransportSe
     protected List<ProtocolContext> initProtocolServers() {
         List<ProtocolContext> result = Lists.newArrayList();
         for (ProtocolServer protocolServer : protocolManager.getProtocolServers()) {
-            ServerConfig protocolServerConfig = protocolServer.createServerConfig(serverConfig);
-            TransportServer transportServer = new ChannelTransportServer(protocolHandlerPipelineFactory.createPipeline(protocolServer),
+            ServerConfig protocolServerConfig = protocolServer.createServerConfig(serverConfig.copy());
+            TransportServer transportServer = new ChannelTransportServer(protocolHandlerPipelineFactory.createPipeline(protocolServer, protocolServerConfig),
                     protocolServerConfig, protocolServerConfig.getHost(), protocolServerConfig.getPort());
             result.add(new ProtocolContext(protocolServer, transportServer));
         }

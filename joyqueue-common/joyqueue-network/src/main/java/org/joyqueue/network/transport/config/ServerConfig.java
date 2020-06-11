@@ -29,6 +29,39 @@ public class ServerConfig extends TransportConfig {
     public ServerConfig() {
     }
 
+    public ServerConfig copy() {
+        ServerConfig result = new ServerConfig();
+        result.setHost(getHost());
+        result.setAcceptThread(getAcceptThread());
+        result.setAcceptThreadName(getAcceptThreadName());
+        result.setIoThread(getIoThread());
+        result.setIoThreadName(getIoThreadName());
+        result.setMaxIdleTime(getMaxIdleTime());
+        result.setReuseAddress(isReuseAddress());
+        result.setSoLinger(getSoLinger());
+        result.setTcpNoDelay(isTcpNoDelay());
+        result.setKeepAlive(isKeepAlive());
+        result.setSoTimeout(getSoTimeout());
+        result.setSocketBufferSize(getSocketBufferSize());
+        result.setFrameMaxSize(getFrameMaxSize());
+        result.setBacklog(getBacklog());
+        result.setMaxOneway(getMaxOneway());
+        result.setNonBlockOneway(isNonBlockOneway());
+        result.setNonBlockAsync(isNonBlockAsync());
+        result.setMaxAsync(getMaxAsync());
+        result.setCallbackThreads(getCallbackThreads());
+        result.setSendTimeout(getSendTimeout());
+        result.setMaxRetrys(getMaxRetrys());
+        result.setMaxRetryDelay(getMaxRetryDelay());
+        result.setRetryDelay(getRetryDelay());
+        result.setUseExponentialBackOff(isUseExponentialBackOff());
+        result.setBackOffMultiplier(getBackOffMultiplier());
+        result.setExpireTime(getExpireTime());
+        result.setRetryPolicy(getRetryPolicy());
+        result.setClearInterval(getClearInterval());
+        result.setUdp(isUdp());
+        return result;
+    }
 
     public void setPort(int port) {
         this.port = port;

@@ -84,6 +84,8 @@ public class TransportConfig {
     private RetryPolicy retryPolicy;
     // 清理间隔
     private int clearInterval = 1000 * 1;
+    // 是否是udp
+    private boolean udp = false;
 
 
     public RetryPolicy getRetryPolicy() {
@@ -311,5 +313,13 @@ public class TransportConfig {
 
     public int getClearInterval() {
         return clearInterval;
+    }
+
+    public void setUdp(boolean udp) {
+        this.udp = udp;
+    }
+
+    public boolean isUdp() {
+        return udp;
     }
 }

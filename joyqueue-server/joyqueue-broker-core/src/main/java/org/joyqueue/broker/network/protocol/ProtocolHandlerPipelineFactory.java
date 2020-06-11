@@ -17,6 +17,7 @@ package org.joyqueue.broker.network.protocol;
 
 import org.joyqueue.network.protocol.Protocol;
 import io.netty.channel.ChannelHandler;
+import org.joyqueue.network.transport.config.ServerConfig;
 
 /**
  * ProtocolHandlerPipelineFactory
@@ -26,5 +27,5 @@ import io.netty.channel.ChannelHandler;
  */
 public interface ProtocolHandlerPipelineFactory {
 
-    ChannelHandler createPipeline(Protocol protocol);
+    ChannelHandler createPipeline(Protocol protocol, ServerConfig serverConfig);
 }

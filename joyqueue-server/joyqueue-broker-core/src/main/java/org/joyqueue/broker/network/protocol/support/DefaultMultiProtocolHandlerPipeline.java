@@ -53,7 +53,7 @@ public class DefaultMultiProtocolHandlerPipeline extends ChannelInitializer {
     }
 
     protected ProtocolContext newProtocolContext(ProtocolService protocol) {
-        ChannelHandler handlerPipeline = protocolHandlerPipelineFactory.createPipeline(protocol);
+        ChannelHandler handlerPipeline = protocolHandlerPipelineFactory.createPipeline(protocol, null);
         return new ProtocolContext(protocol, handlerPipeline);
     }
 

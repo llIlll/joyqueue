@@ -32,6 +32,8 @@ public class Command {
     protected AtomicBoolean released = new AtomicBoolean(false);
     // 附加属性
     protected Object attachment;
+    // udp命令
+    protected boolean udp = false;
 
     public Command() {
     }
@@ -73,6 +75,14 @@ public class Command {
 
     public Object getAttachment() {
         return attachment;
+    }
+
+    public void setUdp(boolean udp) {
+        this.udp = udp;
+    }
+
+    public boolean isUdp() {
+        return udp;
     }
 
     public boolean isSuccess() {

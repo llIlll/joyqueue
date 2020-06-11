@@ -15,9 +15,8 @@
  */
 package org.joyqueue.network.transport;
 
-import org.joyqueue.network.transport.config.ServerConfig;
-import org.joyqueue.toolkit.concurrent.NamedThreadFactory;
-import org.joyqueue.toolkit.service.Service;
+import io.netty.bootstrap.AbstractBootstrap;
+import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
@@ -25,10 +24,15 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollDatagramChannel;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import org.joyqueue.network.transport.config.ServerConfig;
+import org.joyqueue.toolkit.concurrent.NamedThreadFactory;
+import org.joyqueue.toolkit.service.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +53,7 @@ public abstract class TransportServerSupport extends Service implements Transpor
     private int port;
     private EventLoopGroup acceptEventGroup;
     private EventLoopGroup ioEventGroup;
-    private ServerBootstrap serverBootstrap;
+    private AbstractBootstrap bootstrap;
     private Channel channel;
 
     public TransportServerSupport(ServerConfig config) {
@@ -72,15 +76,25 @@ public abstract class TransportServerSupport extends Service implements Transpor
 
     @Override
     protected void doStart() throws Exception {
-        EventLoopGroup acceptEventGroup = newAcceptEventGroup();
-        EventLoopGroup ioEventGroup = newIoEventGroup();
+        EventLoopGroup acceptEventGroup = null;
+        EventLoopGroup ioEventGroup = null;
+        AbstractBootstrap bootstrap = null;
         ChannelHandler channelHandlerPipeline = newChannelHandlerPipeline();
-        ServerBootstrap serverBootstrap = newBootstrap(channelHandlerPipeline, acceptEventGroup, ioEventGroup);
-        Channel channel = doBind(serverBootstrap);
+
+        if (config.isUdp()) {
+            ioEventGroup = newIoEventGroup();
+            bootstrap = newUdpBootstrap(channelHandlerPipeline, ioEventGroup);
+        } else {
+            acceptEventGroup = newAcceptEventGroup();
+            ioEventGroup = newIoEventGroup();
+            bootstrap = newTcpBootstrap(channelHandlerPipeline, acceptEventGroup, ioEventGroup);
+        }
+
+        Channel channel = doBind(bootstrap);
 
         this.acceptEventGroup = acceptEventGroup;
         this.ioEventGroup = ioEventGroup;
-        this.serverBootstrap = serverBootstrap;
+        this.bootstrap = bootstrap;
         this.channel = channel;
     }
 
@@ -107,7 +121,7 @@ public abstract class TransportServerSupport extends Service implements Transpor
         return false;
     }
 
-    protected ServerBootstrap newBootstrap(ChannelHandler channelHandler, EventLoopGroup acceptEventGroup, EventLoopGroup ioEventGroup) throws Exception {
+    protected ServerBootstrap newTcpBootstrap(ChannelHandler channelHandler, EventLoopGroup acceptEventGroup, EventLoopGroup ioEventGroup) throws Exception {
         ServerBootstrap serverBootstrap = new ServerBootstrap();
         serverBootstrap.channel(Epoll.isAvailable() ? EpollServerSocketChannel.class : NioServerSocketChannel.class)
                 .group(acceptEventGroup, ioEventGroup)
@@ -124,8 +138,21 @@ public abstract class TransportServerSupport extends Service implements Transpor
         return serverBootstrap;
     }
 
-    protected Channel doBind(ServerBootstrap serverBootstrap) throws Exception {
-        return serverBootstrap.bind(port)
+    protected Bootstrap newUdpBootstrap(ChannelHandler channelHandler, EventLoopGroup ioEventGroup) throws Exception {
+        Bootstrap bootstrap = new Bootstrap();
+        bootstrap.channel(Epoll.isAvailable() ? EpollDatagramChannel.class : NioDatagramChannel.class)
+                .group(ioEventGroup)
+                .handler(channelHandler)
+                .option(ChannelOption.SO_REUSEADDR, config.isReuseAddress())
+                .option(ChannelOption.SO_RCVBUF, config.getSocketBufferSize())
+                .option(ChannelOption.SO_BACKLOG, config.getBacklog())
+                .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+                .option(ChannelOption.SO_BROADCAST, true);
+        return bootstrap;
+    }
+
+    protected Channel doBind(AbstractBootstrap bootstrap) throws Exception {
+        return bootstrap.bind(port)
                 .sync()
                 .channel();
     }

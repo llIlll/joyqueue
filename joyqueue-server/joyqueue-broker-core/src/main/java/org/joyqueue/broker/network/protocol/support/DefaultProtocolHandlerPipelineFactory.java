@@ -21,8 +21,10 @@ import org.joyqueue.network.event.TransportEventHandler;
 import org.joyqueue.network.handler.ConnectionHandler;
 import org.joyqueue.network.protocol.ChannelHandlerProvider;
 import org.joyqueue.network.protocol.Protocol;
+import org.joyqueue.network.protocol.ProtocolServer;
 import org.joyqueue.network.transport.command.CommandDispatcher;
 import org.joyqueue.network.transport.command.CommandDispatcherFactory;
+import org.joyqueue.network.transport.config.ServerConfig;
 
 /**
  * DefaultProtocolHandlerPipelineFactory
@@ -43,9 +45,15 @@ public class DefaultProtocolHandlerPipelineFactory implements ProtocolHandlerPip
     }
 
     @Override
-    public ChannelHandler createPipeline(Protocol protocol) {
+    public ChannelHandler createPipeline(Protocol protocol, ServerConfig serverConfig) {
         CommandDispatcher commandDispatcher = commandDispatcherFactory.getCommandDispatcher(protocol);
         ChannelHandler handlerPipeline = new DefaultProtocolHandlerPipeline(protocol, commandDispatcher, transportEventHandler, connectionHandler);
+
+        if (protocol instanceof ProtocolServer) {
+            if (serverConfig != null && serverConfig.isUdp()) {
+                handlerPipeline = new UDPProtocolHandlerPipeline(protocol, commandDispatcher, transportEventHandler, connectionHandler);
+            }
+        }
 
         if (protocol instanceof ChannelHandlerProvider) {
             ChannelHandler customHandlerPipeline = ((ChannelHandlerProvider) protocol).getChannelHandler(handlerPipeline);

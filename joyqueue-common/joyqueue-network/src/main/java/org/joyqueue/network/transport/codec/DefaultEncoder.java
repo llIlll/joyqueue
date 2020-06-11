@@ -15,12 +15,13 @@
  */
 package org.joyqueue.network.transport.codec;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.DefaultAddressedEnvelope;
 import org.joyqueue.network.transport.command.Command;
 import org.joyqueue.network.transport.command.Header;
 import org.joyqueue.network.transport.command.JoyQueuePayload;
 import org.joyqueue.network.transport.command.Payload;
 import org.joyqueue.network.transport.exception.TransportException;
-import io.netty.buffer.ByteBuf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,11 +46,16 @@ public class DefaultEncoder implements Encoder {
     @Override
     public void encode(Object obj, ByteBuf buffer) throws TransportException.CodecException {
         try {
-            if (!(obj instanceof Command)) {
+            if (!(obj instanceof Command) && !(obj instanceof DefaultAddressedEnvelope)) {
                 throw new TransportException.CodecException(String.format("unsupported encode type, type: %s", obj.getClass()));
             }
 
-            Command response = (Command) obj;
+            Command response = null;
+            if (obj instanceof DefaultAddressedEnvelope) {
+                response = (Command) ((DefaultAddressedEnvelope) obj).content();
+            } else {
+                response = (Command) obj;
+            }
             Header header = response.getHeader();
             Object payload = response.getPayload();
 
