@@ -15,6 +15,7 @@
  */
 package org.joyqueue.broker.election.handler;
 
+import com.google.common.base.Preconditions;
 import org.joyqueue.broker.BrokerContext;
 import org.joyqueue.broker.election.ElectionManager;
 import org.joyqueue.broker.election.ElectionService;
@@ -22,16 +23,14 @@ import org.joyqueue.broker.election.LeaderElection;
 import org.joyqueue.broker.election.command.AppendEntriesRequest;
 import org.joyqueue.broker.election.command.AppendEntriesResponse;
 import org.joyqueue.exception.JoyQueueCode;
+import org.joyqueue.network.command.CommandType;
+import org.joyqueue.network.transport.Transport;
 import org.joyqueue.network.transport.codec.JoyQueueHeader;
 import org.joyqueue.network.transport.command.Command;
-import org.joyqueue.network.command.CommandType;
 import org.joyqueue.network.transport.command.Direction;
 import org.joyqueue.network.transport.command.Type;
 import org.joyqueue.network.transport.command.handler.CommandHandler;
-import org.joyqueue.network.transport.Transport;
 import org.joyqueue.network.transport.exception.TransportException;
-import com.google.common.base.Preconditions;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

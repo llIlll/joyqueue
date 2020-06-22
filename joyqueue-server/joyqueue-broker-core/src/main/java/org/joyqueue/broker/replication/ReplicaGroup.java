@@ -106,6 +106,7 @@ public class ReplicaGroup extends Service {
     private static final long ONE_SECOND_NANO = 1000 * 1000 * 1000;
     private static final long ONE_MS_NANO     = 1000 * 1000;
     private static final int MAX_PROCESS_TIME =  300 * 1000;
+    private static final long REPLICA_INTERVAL_NANO = 1000 * 500;
 
     ReplicaGroup(TopicPartitionGroup topicPartitionGroup, ReplicationManager replicationManager,
                  ReplicableStore replicableStore, ElectionConfig electionConfig, BrokerConfig brokerConfig,
@@ -416,10 +417,10 @@ public class ReplicaGroup extends Service {
 
                     AppendEntriesRequest request = generateAppendEntriesRequest(replica);
                     if (request == null) {
-                        if (SystemClock.now() - replica.getLastAppendTime() >= electionConfig.getElectionTimeout()) {
+                        if (SystemClock.now() - replica.getLastAppendTime() >= electionConfig.getHeartbeatTimeout()) {
                             request = generateHeartbeatRequest(replica);
                         } else {
-                            replicateResponseQueue.put(new DelayedCommand(ONE_MS_NANO, replica.replicaId()));
+                            replicateResponseQueue.put(new DelayedCommand(REPLICA_INTERVAL_NANO, replica.replicaId()));
                             return;
                         }
                     }
@@ -457,7 +458,6 @@ public class ReplicaGroup extends Service {
      * @throws Exception 异常
      */
     private AppendEntriesRequest generateAppendEntriesRequest(Replica replica) throws Exception {
-
         long leftPosition = replicableStore.leftPosition();
         long startPosition = Math.max(replica.nextPosition(), leftPosition);
 

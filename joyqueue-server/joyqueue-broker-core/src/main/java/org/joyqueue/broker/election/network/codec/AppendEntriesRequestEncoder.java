@@ -55,6 +55,9 @@ public class AppendEntriesRequestEncoder implements PayloadEncoder<AppendEntries
         entries.mark();
         buffer.writeBytes(entries);
         entries.reset();
+
+        // help gc
+        payload.setEntries(null);
     }
 
     @Override

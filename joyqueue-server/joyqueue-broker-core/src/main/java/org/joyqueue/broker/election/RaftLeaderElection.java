@@ -847,7 +847,7 @@ public class RaftLeaderElection extends LeaderElection  {
             }
         }
 
-        resetHeartbeatTimer();
+//        resetHeartbeatTimer();
     }
 
 
