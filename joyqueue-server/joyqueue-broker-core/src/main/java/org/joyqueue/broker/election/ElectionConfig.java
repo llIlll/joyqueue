@@ -161,6 +161,10 @@ public class ElectionConfig {
         return PropertySupplier.getValue(propertySupplier, ElectionConfigKey.ENABLE_SHARED_HEARTBEAT);
     }
 
+    public boolean enableReplicationPositionCheck() {
+        return PropertySupplier.getValue(propertySupplier, ElectionConfigKey.ENABLE_REPLICATION_POSITION_CHECK);
+    }
+
     public void setListenPort(String port) {
         listenPort = Integer.valueOf(port);
     }

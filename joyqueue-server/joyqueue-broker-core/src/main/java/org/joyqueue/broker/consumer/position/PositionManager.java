@@ -16,6 +16,7 @@
 package org.joyqueue.broker.consumer.position;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.jd.laf.extension.ExtensionManager;
 import org.apache.commons.lang3.StringUtils;
 import org.joyqueue.broker.cluster.ClusterManager;
@@ -188,7 +189,7 @@ public class PositionManager extends Service {
         Map<ConsumePartition, Position> consumeInfo = new HashMap<>();
 
         if (appList != null && !appList.isEmpty()) {
-            List<PartitionGroup> partitionGroupList = clusterManager.getLocalPartitionGroups(topic);
+            List<PartitionGroup> partitionGroupList = Lists.newArrayList(clusterManager.getTopicConfig(topic).getPartitionGroups().values());
             for (PartitionGroup group : partitionGroupList) {
                 if (group.getGroup() == partitionGroup) {
                     Set<Short> partitions = group.getPartitions();

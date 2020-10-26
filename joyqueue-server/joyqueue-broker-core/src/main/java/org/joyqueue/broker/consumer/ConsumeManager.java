@@ -603,10 +603,13 @@ public class ConsumeManager extends Service implements Consume, BrokerContextAwa
         return positionManager.getConsumePosition(topic, app, partitionGroup);
     }
 
+    public Map<ConsumePartition, Position> getConsumePositionByGroupOld(TopicName topic, int partitionGroup) {
+        return positionManager.getConsumePosition(topic, partitionGroup);
+    }
+
     @Override
     public Map<ConsumePartition, Position> getConsumePositionByGroup(TopicName topic, int partitionGroup) {
-        List<PartitionGroup> partitionGroupList = clusterManager.getLocalPartitionGroups(topic);
-        if (CollectionUtils.isEmpty(partitionGroupList)) {
+        if (!clusterManager.isLeader(topic, partitionGroup)) {
             return null;
         }
         return positionManager.getConsumePosition(topic, partitionGroup);

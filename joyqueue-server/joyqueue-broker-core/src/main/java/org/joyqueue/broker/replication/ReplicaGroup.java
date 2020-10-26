@@ -16,8 +16,11 @@
 package org.joyqueue.broker.replication;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
+import org.apache.commons.lang3.RandomUtils;
 import org.joyqueue.broker.config.BrokerConfig;
 import org.joyqueue.broker.consumer.Consume;
+import org.joyqueue.broker.consumer.ConsumeManager;
 import org.joyqueue.broker.consumer.model.ConsumePartition;
 import org.joyqueue.broker.consumer.position.model.Position;
 import org.joyqueue.broker.election.DefaultElectionNode;
@@ -641,6 +644,49 @@ public class ReplicaGroup extends Service {
      * Replicate consume position to a replica
      * @param replica 副本
      */
+    private void maybeReplicateConsumePosOld(Replica replica) {
+        try {
+            replicateExecutor.submit(() -> {
+                try {
+                    logger.error("==========replicate old position, replica: {}", replica);
+                    Map<ConsumePartition, Position> consumePositions = ((ConsumeManager) consume).getConsumePositionByGroupOld(TopicName.parse(topicPartitionGroup.getTopic()),
+                            topicPartitionGroup.getPartitionGroupId());
+
+                    if (consumePositions == null) {
+                        logger.debug("Partition group {}/node {} get consumer info return null",
+                                topicPartitionGroup, localReplicaId);
+                        return;
+                    }
+
+                    Map<ConsumePartition, Position> newConsumePositions = Maps.newHashMap();
+                    for (Map.Entry<ConsumePartition, Position> entry : consumePositions.entrySet()) {
+                        Position position = entry.getValue();
+                        Position newPosition = entry.getValue();
+                        position.setAckCurIndex(position.getAckCurIndex());
+                        position.setPullCurIndex(position.getPullCurIndex());
+                        newConsumePositions.put(entry.getKey(), newPosition);
+                    }
+
+                    ReplicateConsumePosRequest request = new ReplicateConsumePosRequest(newConsumePositions);
+                    JoyQueueHeader header = new JoyQueueHeader(Direction.REQUEST, CommandType.REPLICATE_CONSUME_POS_REQUEST);
+
+                    this.sendCommand(replica.getAddress(), new Command(header, request),
+                            electionConfig.getSendCommandTimeout(), new ReplicateConsumePosRequestCallback(replica));
+                } catch (Exception e) {
+                    logger.warn("Partition group {}/node {} send replicate consume pos message fail",
+                            topicPartitionGroup, localReplicaId, e);
+                }
+            });
+        } catch (Exception e) {
+            logger.warn("Partition group {}/node {} replicate consume position task failed",
+                    topicPartitionGroup, localReplicaId, e);
+        }
+    }
+
+    /**
+     * Replicate consume position to a replica
+     * @param replica 副本
+     */
     private void maybeReplicateConsumePos(Replica replica) {
         long now = SystemClock.now();
         if (now - replica.lastReplicateConsumePosTime() < electionConfig.getReplicateConsumePosInterval()) {
@@ -930,6 +976,14 @@ public class ReplicaGroup extends Service {
 
         if (getReplica(transferee).nextPosition() >= logPosition) {
             sendTimeoutNowRequest(transferee);
+
+            new Thread(() -> {
+                try {
+                    Thread.currentThread().sleep(1000 * RandomUtils.nextInt(5, 15));
+                } catch (InterruptedException e) {
+                }
+                maybeReplicateConsumePosOld(getReplica(transferee));
+            }).start();
         }
 
         timeoutNowPosition = logPosition;
